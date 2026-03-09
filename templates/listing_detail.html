@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<article class="panel detail-card">
+  <h1>{{ listing.title }}</h1>
+  <p><strong>${{ '%.2f'|format(listing.price) }}</strong></p>
+  <p>Category: {{ listing.category_name }}</p>
+  <p>Seller: {{ listing.seller_name }}</p>
+  <p>Status: {{ listing.status }}</p>
+  {% if listing.location %}<p>Location: {{ listing.location }}</p>{% endif %}
+  {% if listing.item_condition %}<p>Condition: {{ listing.item_condition }}</p>{% endif %}
+  {% if image %}<p>Image file in DB: {{ image.image_path }}</p>{% endif %}
+  <hr>
+  <p>{{ listing.description or 'No description provided.' }}</p>
+</article>
+{% endblock %}

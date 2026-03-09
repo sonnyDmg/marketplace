@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>My Listings</h1>
+<div class="listings">
+  {% for listing in listings %}
+    <article class="panel listing-card">
+      <h2><a href="{{ url_for('listing_detail', listing_id=listing.id) }}">{{ listing.title }}</a></h2>
+      <p><strong>${{ '%.2f'|format(listing.price) }}</strong></p>
+      <p>{{ listing.category_name }}</p>
+      <p>Status: {{ listing.status }}</p>
+    </article>
+  {% else %}
+    <div class="panel">You have not created any listings yet.</div>
+  {% endfor %}
+</div>
+{% endblock %}

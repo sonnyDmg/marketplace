@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Listings</h1>
+
+<form method="get" class="panel search-form">
+  <div>
+    <label for="q">Search</label>
+    <input id="q" type="text" name="q" value="{{ q }}" placeholder="Search titles or locations">
+  </div>
+  <div>
+    <label for="category">Category</label>
+    <select id="category" name="category">
+      <option value="">All</option>
+      {% for category in categories %}
+        <option value="{{ category.id }}" {% if selected_category == category.id %}selected{% endif %}>{{ category.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="button-row">
+    <button type="submit">Filter</button>
+    <a href="{{ url_for('home') }}">Clear</a>
+  </div>
+</form>
+
+<div class="listings">
+  {% for listing in listings %}
+    <article class="panel listing-card">
+      <h2><a href="{{ url_for('listing_detail', listing_id=listing.id) }}">{{ listing.title }}</a></h2>
+      <p><strong>${{ '%.2f'|format(listing.price) }}</strong></p>
+      <p>{{ listing.category_name }}{% if listing.location %} · {{ listing.location }}{% endif %}</p>
+      <p>Seller: {{ listing.seller_name }}</p>
+      <p>Status: {{ listing.status }}</p>
+    </article>
+  {% else %}
+    <div class="panel">No listings found.</div>
+  {% endfor %}
+</div>
+{% endblock %}
