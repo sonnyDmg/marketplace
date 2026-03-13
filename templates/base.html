@@ -3,22 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Simple Marketplace</title>
+  <title>Marketplace</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
   <header>
     <div class="wrap nav">
-      <a href="{{ url_for('home') }}" class="brand">Simple Marketplace</a>
-      <nav>
-        <a href="{{ url_for('home') }}">Home</a>
+      <a class="brand-title" href="{{ url_for('home') }}" >Marketplace</a>
+      <nav class="navbar navbar-inner">
+        <a class="nav-btns" href="{{ url_for('home') }}">Home</a>
         {% if current_user_id %}
-          <a href="{{ url_for('create_listing') }}">Create Listing</a>
-          <a href="{{ url_for('my_listings') }}">My Listings</a>
-          <a href="{{ url_for('logout') }}">Logout</a>
+          <a class="nav-btns" href="{{ url_for('create_listing') }}">Create Listing</a>
+          <a class="nav-btns" href="{{ url_for('my_listings') }}">My Listings</a>
+          <a class="nav-btns" href="{{ url_for('logout') }}">Logout</a>
         {% else %}
-          <a href="{{ url_for('login') }}">Login</a>
-          <a href="{{ url_for('register') }}">Register</a>
+          <a class="nav-btns" href="{{ url_for('login') }}">Login</a>
+          <a class="nav-btns" href="{{ url_for('register') }}">Register</a>
         {% endif %}
       </nav>
     </div>

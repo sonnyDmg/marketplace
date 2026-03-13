@@ -24,6 +24,11 @@
       <option value="{{ category.id }}">{{ category.name }}</option>
     {% endfor %}
   </select>
+  <label class="">Add Images</label>
+  <form action="/upload-image" method="post" enctype="multipart/form-data">
+    <input type="file" name="images" id="images" accept="image/*" multiple>
+    <p><input type="submit" value="Upload" /></p>
+  </form>
 
   <button type="submit">Create</button>
 </form>

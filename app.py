@@ -1,26 +1,38 @@
 import os
 from decimal import Decimal
 from functools import wraps
-
-from flask import Flask, flash, redirect, render_template, request, session, url_for
+import uuid
+from flask import Flask, flash, redirect, render_template, request, session, url_for, send_from_directory
 import mysql.connector
 from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-change-me')
+
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 8 * 1024 * 1024
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',
     'password': 'root',
     'database': 'project_shop',
-    'port': 8889,
+    'port': 3306,
 }
 
 
 def get_db_connection():
     return mysql.connector.connect(**DB_CONFIG)
 
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def login_required(view_func):
     @wraps(view_func)
@@ -49,13 +61,20 @@ def home():
     categories = cur.fetchall()
 
     sql = '''
-        SELECT l.id, l.title, l.price, l.location, l.status, l.created_at,
-               c.name AS category_name, u.name AS seller_name
-        FROM listings l
-        JOIN categories c ON l.category_id = c.id
-        JOIN users u ON l.user_id = u.id
-        WHERE 1=1
-    '''
+    SELECT l.id, l.title, l.price, l.location, l.status, l.created_at,
+           c.name AS category_name, u.name AS seller_name,
+           (
+               SELECT li.image_path
+               FROM listing_images li
+               WHERE li.listing_id = l.id
+               ORDER BY li.id
+               LIMIT 1
+           ) AS cover_image
+    FROM listings l
+    JOIN categories c ON l.category_id = c.id
+    JOIN users u ON l.user_id = u.id
+    WHERE 1=1
+'''
     params = []
 
     if category_id:
@@ -74,6 +93,9 @@ def home():
     conn.close()
     return render_template('home.html', listings=listings, categories=categories, selected_category=category_id, q=query)
 
+@app.route('/uploads/<path:filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -168,7 +190,6 @@ def listing_detail(listing_id):
 
     return render_template('listing_detail.html', listing=listing, image=image)
 
-
 @app.route('/create', methods=['GET', 'POST'])
 @login_required
 def create_listing():
@@ -207,8 +228,27 @@ def create_listing():
             ''',
             (session['user_id'], category_id, title, description, price, location, item_condition)
         )
-        conn.commit()
         new_id = cur2.lastrowid
+        files = request.files.getlist('images')
+        for file in files:
+            if file and file.filename:
+                if allowed_file(file.filename):
+                    safe_name = secure_filename(file.filename)
+                    unique_name = f"{uuid.uuid4().hex}_{safe_name}"
+                    save_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_name)
+                    file.save(save_path)
+
+                    cur2.execute(
+                        '''
+                        INSERT INTO listing_images (listing_id, image_path)
+                        VALUES (%s, %s)
+                        ''',
+                        (new_id, unique_name)
+                    )
+                else:
+                    flash(f'File type not allowed: {file.filename}')
+
+        conn.commit()
         cur2.close()
         cur.close()
         conn.close()
@@ -226,15 +266,22 @@ def my_listings():
     conn = get_db_connection()
     cur = conn.cursor(dictionary=True)
     cur.execute(
-        '''
-        SELECT l.id, l.title, l.price, l.status, c.name AS category_name, l.created_at
-        FROM listings l
-        JOIN categories c ON l.category_id = c.id
-        WHERE l.user_id = %s
-        ORDER BY l.created_at DESC
-        ''',
-        (session['user_id'],)
-    )
+    '''
+    SELECT l.id, l.title, l.price, l.status, c.name AS category_name, l.created_at,
+           (
+               SELECT li.image_path
+               FROM listing_images li
+               WHERE li.listing_id = l.id
+               ORDER BY li.id
+               LIMIT 1
+           ) AS cover_image
+    FROM listings l
+    JOIN categories c ON l.category_id = c.id
+    WHERE l.user_id = %s
+    ORDER BY l.created_at DESC
+    ''',
+    (session['user_id'],)
+)
     listings = cur.fetchall()
     cur.close()
     conn.close()
