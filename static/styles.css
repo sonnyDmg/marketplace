@@ -157,3 +157,19 @@ a:link {
 a:visited {
   color: rgb(255, 255, 255);
 }
+
+.listing-card .listing-link,
+.listing-card .listing-link:link,
+.listing-card .listing-link:visited {
+  color: #125fcc;
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.listing-card .listing-link:hover,
+.listing-card .listing-link:focus {
+  color: #0e6eff;
+  text-decoration: underline;
+}

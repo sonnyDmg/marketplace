@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 {% block content %}
 <h1>Create Listing</h1>
-<form method="post" class="panel form-card">
+
+<form method="post" enctype="multipart/form-data" class="panel form-card">
   <label>Title</label>
   <input type="text" name="title" required>
 
@@ -24,11 +25,9 @@
       <option value="{{ category.id }}">{{ category.name }}</option>
     {% endfor %}
   </select>
-  <label class="">Add Images</label>
-  <form action="/upload-image" method="post" enctype="multipart/form-data">
-    <input type="file" name="images" id="images" accept="image/*" multiple>
-    <p><input type="submit" value="Upload" /></p>
-  </form>
+
+  <label for="images">Add Images</label>
+  <input type="file" name="images" id="images" accept="image/*" multiple>
 
   <button type="submit">Create</button>
 </form>
