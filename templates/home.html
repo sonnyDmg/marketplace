@@ -1,50 +1,66 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1 class="main-title">Listings</h1>
-<form method="get" class="panel search-form">
-  <div>
-    <label for="q">Search</label>
-    <input id="q" type="text" name="q" value="{{ q }}" placeholder="Search titles or locations">
-  </div>
-  <div>
-    <label for="category">Category</label>
-    <select id="category" name="category">
-      <option value="">All</option>
-      {% for category in categories %}
-        <option value="{{ category.id }}" {% if selected_category == category.id %}selected{% endif %}>{{ category.name }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="button-row">
-    <button type="submit">Filter</button>
-    <a class="main-title" href="{{ url_for('home') }}">Clear</a>
-  </div>
-</form>
 
-<div class="listings">
-  {% for listing in listings %}
-    <article class="panel listing-card">
-      <div class="listing-image">
-        {% if listing.cover_image %}
-          <img src="{{ url_for('uploaded_file', filename=listing.cover_image) }}" alt="{{ listing.title }}">
-        {% else %}
-          <div class="no-image">No Image</div>
-        {% endif %}
+<div class="marketplace-layout">
+  <aside id="side-bar" class="sidenav">
+    <form method="get" class="panel sidebar">
+      <div class="search-options">
+        <label for="q">Search</label>
+        <input id="q" type="text" name="q" value="{{ q }}" placeholder="Search titles or locations">
       </div>
 
-      <h2>
-        <a class="listing-link" href="{{ url_for('listing_detail', listing_id=listing.id) }}">
-          {{ listing.title }}
-        </a>
-      </h2>
+      <div class="search-options">
+        <label for="location">Location</label>
+        <input id="location" type="text" name="location" placeholder="Enter Search Location" value="{{ location_query }}">
+      </div>
 
-      <p class="price"><strong>${{ '%.2f'|format(listing.price) }}</strong></p>
-      <p>{{ listing.category_name }}{% if listing.location %} · {{ listing.location }}{% endif %}</p>
-      <p>Seller: {{ listing.seller_name }}</p>
-      <p>Status: {{ listing.status }}</p>
-    </article>
-  {% else %}
-    <div class="panel">No listings found.</div>
-  {% endfor %}
+      <div class="search-options">
+        <label for="category">Category</label>
+        <select id="category" name="category">
+          <option value="">All</option>
+          {% for category in categories %}
+            <option value="{{ category.id }}" {% if selected_category == category.id %}selected{% endif %}>{{ category.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="button-row search-options">
+        <button type="submit">Filter</button>
+        <a class="main-title" href="{{ url_for('home') }}">Clear</a>
+      </div>
+    </form>
+  </aside>
+
+  <main class="marketplace-main">
+    <h1 class="main-title">Listings</h1>
+
+    <div class="listings">
+      {% for listing in listings %}
+        <article class="panel listing-card">
+          <div class="listing-image">
+            {% if listing.cover_image %}
+              <img src="{{ url_for('uploaded_file', filename=listing.cover_image) }}" alt="{{ listing.title }}">
+            {% else %}
+              <div class="no-image">No Image</div>
+            {% endif %}
+          </div>
+
+          <h2>
+            <a class="listing-link" href="{{ url_for('listing_detail', listing_id=listing.id) }}">
+              {{ listing.title }}
+            </a>
+          </h2>
+
+          <p class="price"><strong>${{ '%.2f'|format(listing.price) }}</strong></p>
+          <p>{{ listing.category_name }}{% if listing.location %} · {{ listing.location }}{% endif %}</p>
+          <p>Seller: {{ listing.seller_name }}</p>
+          <p>Status: {{ listing.status }}</p>
+        </article>
+      {% else %}
+        <div class="panel">No listings found.</div>
+      {% endfor %}
+    </div>
+  </main>
 </div>
+
 {% endblock %}

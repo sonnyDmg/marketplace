@@ -53,6 +53,7 @@ def inject_user():
 def home():
     category_id = request.args.get('category', type=int)
     query = request.args.get('q', '').strip()
+    location_query = request.args.get('location', "").strip()
 
     conn = get_db_connection()
     cur = conn.cursor(dictionary=True)
@@ -84,6 +85,9 @@ def home():
         sql += ' AND (l.title LIKE %s OR l.description LIKE %s OR l.location LIKE %s)'
         like = f'%{query}%'
         params.extend([like, like, like])
+    if location_query:
+        sql += ' AND l.location LIKE %s'
+        params.append(f'%{location_query}%')
 
     sql += ' ORDER BY l.created_at DESC'
     cur.execute(sql, params)
@@ -91,7 +95,7 @@ def home():
 
     cur.close()
     conn.close()
-    return render_template('home.html', listings=listings, categories=categories, selected_category=category_id, q=query)
+    return render_template('home.html', listings=listings, categories=categories, selected_category=category_id, q=query, location_query=location_query)
 
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):

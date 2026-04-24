@@ -6,8 +6,8 @@ body {
 }
 
 .wrap {
-  width: min(900px, 92%);
-  margin: 0 auto;
+  width: min(1440px, 92%);
+  margin: 0, auto;
 }
 
 header {
@@ -92,7 +92,7 @@ button {
 
 .listings {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
   margin-top: 20px
 }
@@ -149,6 +149,10 @@ h1, h2 {
   color:#0e6eff;
 }
 
+.markplace-title{
+  margin: 15px;
+}
+
 
 a:link {
   color: rgb(255, 255, 255);
@@ -172,4 +176,53 @@ a:visited {
 .listing-card .listing-link:focus {
   color: #0e6eff;
   text-decoration: underline;
+}
+
+.marketplace-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.sidenav {
+  position: sticky;
+  top: 20px;
+  align-self: start;
+  height: 100%;
+}
+
+.marketplace-main {
+  min-width: 0;
+}
+
+.listings {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+@media (max-width: 900px) {
+  .marketplace-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidenav {
+    position: static;
+  }
+}
+
+.sidebar {
+  height: 100%;
+}
+
+.search-options{
+  margin: 6px;
+}
+
+@media (max-width: 900px) {
+  .listings {
+    grid-template-columns: 1fr;
+  }
 }
