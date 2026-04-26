@@ -8,6 +8,20 @@
       <p><strong>${{ '%.2f'|format(listing.price) }}</strong></p>
       <p>{{ listing.category_name }}</p>
       <p>Status: {{ listing.status }}</p>
+      <div class="listing-image">
+        {% if listing.cover_image %}
+          <img src="{{ url_for('uploaded_file', filename=listing.cover_image) }}" alt="{{ listing.title }}">
+        {% else %}
+          <div class="no-image">No Image</div>
+        {% endif %}
+      </div>
+      <div class="button-row">
+        <a class="conversation-link nav-btns" href="{{ url_for('listing_detail', listing_id=listing.id) }}">View</a>
+        <a class="conversation-link nav-btns" href="{{ url_for('edit_listing', listing_id=listing.id) }}">Edit</a>
+        <form method="post" action="{{ url_for('delete_listing', listing_id=listing.id) }}" onsubmit="return confirm('Delete this listing?');">
+          <button type="submit" class="nav-btns">Delete</button>
+        </form>
+      </div>
     </article>
   {% else %}
     <div class="panel">You have not created any listings yet.</div>

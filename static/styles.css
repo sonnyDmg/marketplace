@@ -483,3 +483,40 @@ button {
   position: relative;
   z-index: 1;
 }
+
+.button-row form {
+  margin: 0;
+}
+
+.button-row form button {
+  width: auto;
+}
+
+.button-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.button-row a,
+.button-row button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 78px;
+  height: 46px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+  text-decoration: none;
+}
+
+.button-row form {
+  margin: 0;
+}
+
+.button-row form button {
+  width: auto;
+}

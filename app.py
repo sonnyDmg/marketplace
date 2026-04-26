@@ -364,6 +364,149 @@ def conversation(other_user_id):
         chat_messages=chat_messages
     )
 
+@app.route('/listing/<int:listing_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_listing(listing_id):
+    conn = get_db_connection()
+    cur = conn.cursor(dictionary=True)
+
+    cur.execute(
+        '''
+        SELECT *
+        FROM listings
+        WHERE id = %s AND user_id = %s
+        ''',
+        (listing_id, session['user_id'])
+    )
+    listing = cur.fetchone()
+
+    if not listing:
+        cur.close()
+        conn.close()
+        flash('Listing not found or you do not have permission to edit it.')
+        return redirect(url_for('home'))
+
+    cur.execute('SELECT id, name FROM categories ORDER BY name')
+    categories = cur.fetchall()
+
+    if request.method == 'POST':
+        title = request.form['title'].strip()
+        description = request.form.get('description', '').strip()
+        price_raw = request.form['price'].strip()
+        location = request.form.get('location', '').strip()
+        item_condition = request.form.get('item_condition', '').strip()
+        category_id = request.form.get('category_id', type=int)
+        status = request.form.get('status', 'available').strip()
+
+        if not title or not price_raw or not category_id:
+            flash('Title, price, and category are required.')
+            cur.close()
+            conn.close()
+            return render_template('edit_listing.html', listing=listing, categories=categories)
+
+        try:
+            price = Decimal(price_raw)
+        except Exception:
+            flash('Enter a valid price.')
+            cur.close()
+            conn.close()
+            return render_template('edit_listing.html', listing=listing, categories=categories)
+
+        if status not in ['available', 'pending', 'sold']:
+            status = 'available'
+
+        cur2 = conn.cursor()
+        cur2.execute(
+            '''
+            UPDATE listings
+            SET category_id = %s,
+                title = %s,
+                description = %s,
+                price = %s,
+                location = %s,
+                item_condition = %s,
+                status = %s
+            WHERE id = %s AND user_id = %s
+            ''',
+            (
+                category_id,
+                title,
+                description,
+                price,
+                location,
+                item_condition,
+                status,
+                listing_id,
+                session['user_id']
+            )
+        )
+        conn.commit()
+
+        cur2.close()
+        cur.close()
+        conn.close()
+
+        flash('Listing updated.')
+        return redirect(url_for('listing_detail', listing_id=listing_id))
+
+    cur.close()
+    conn.close()
+    return render_template('edit_listing.html', listing=listing, categories=categories)
+
+@app.route('/listing/<int:listing_id>/delete', methods=['POST'])
+@login_required
+def delete_listing(listing_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        '''
+        DELETE FROM listings
+        WHERE id = %s AND user_id = %s
+        ''',
+        (listing_id, session['user_id'])
+    )
+    conn.commit()
+
+    deleted = cur.rowcount
+
+    cur.close()
+    conn.close()
+
+    if deleted:
+        flash('Listing deleted.')
+    else:
+        flash('Listing not found or you do not have permission to delete it.')
+
+    return redirect(url_for('my_listings'))
+
+@app.route('/my-listings')
+@login_required
+def my_listings():
+    conn = get_db_connection()
+    cur = conn.cursor(dictionary=True)
+    cur.execute(
+    '''
+    SELECT l.id, l.title, l.price, l.status, c.name AS category_name, l.created_at,
+           (
+               SELECT li.image_path
+               FROM listing_images li
+               WHERE li.listing_id = l.id
+               ORDER BY li.id
+               LIMIT 1
+           ) AS cover_image
+    FROM listings l
+    JOIN categories c ON l.category_id = c.id
+    WHERE l.user_id = %s
+    ORDER BY l.created_at DESC
+    ''',
+    (session['user_id'],)
+)
+    listings = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('my_listings.html', listings=listings)
+
 @app.route('/create', methods=['GET', 'POST'])
 @login_required
 def create_listing():
@@ -403,6 +546,7 @@ def create_listing():
             (session['user_id'], category_id, title, description, price, location, item_condition)
         )
         new_id = cur2.lastrowid
+
         files = request.files.getlist('images')
         for file in files:
             if file and file.filename:
@@ -432,35 +576,6 @@ def create_listing():
     cur.close()
     conn.close()
     return render_template('create_listing.html', categories=categories)
-
-
-@app.route('/my-listings')
-@login_required
-def my_listings():
-    conn = get_db_connection()
-    cur = conn.cursor(dictionary=True)
-    cur.execute(
-    '''
-    SELECT l.id, l.title, l.price, l.status, c.name AS category_name, l.created_at,
-           (
-               SELECT li.image_path
-               FROM listing_images li
-               WHERE li.listing_id = l.id
-               ORDER BY li.id
-               LIMIT 1
-           ) AS cover_image
-    FROM listings l
-    JOIN categories c ON l.category_id = c.id
-    WHERE l.user_id = %s
-    ORDER BY l.created_at DESC
-    ''',
-    (session['user_id'],)
-)
-    listings = cur.fetchall()
-    cur.close()
-    conn.close()
-    return render_template('my_listings.html', listings=listings)
-
 
 if __name__ == '__main__':
     app.run(debug=True)
