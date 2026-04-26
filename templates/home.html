@@ -26,7 +26,7 @@
 
       <div class="button-row search-options">
         <button type="submit">Filter</button>
-        <a class="main-title" href="{{ url_for('home') }}">Clear</a>
+        <button type="button" class="clear-btn" onclick="clearFilters()">Clear</button>
       </div>
     </form>
   </aside>
@@ -62,5 +62,13 @@
     </div>
   </main>
 </div>
-
+<script>
+  function clearFilters() {
+    const form = document.querySelector('.sidebar');
+    if (form) {
+      form.reset();
+    }
+    window.location = "{{ url_for('home') }}";
+  }
+</script>
 {% endblock %}
