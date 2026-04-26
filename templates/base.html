@@ -15,6 +15,7 @@
         {% if current_user_id %}
           <a class="nav-btns" href="{{ url_for('create_listing') }}">Create Listing</a>
           <a class="nav-btns" href="{{ url_for('my_listings') }}">My Listings</a>
+          <a class="nav-btns" href="{{ url_for('messages') }}">Messages</a>
           <a class="nav-btns" href="{{ url_for('logout') }}">Logout</a>
         {% else %}
           <a class="nav-btns" href="{{ url_for('login') }}">Login</a>

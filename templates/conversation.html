@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h1>Chat with {{ other_user.name }}</h1>
+
+<div class="panel">
+  {% if chat_messages %}
+    {% for message in chat_messages %}
+      <div class="chat-message {% if message.sender_id == current_user_id %}my-message{% else %}their-message{% endif %}">
+        <p>
+          <strong>
+            {% if message.sender_id == current_user_id %}
+              You
+            {% else %}
+              {{ message.sender_name }}
+            {% endif %}
+          </strong>
+        </p>
+
+        {% if message.listing_title %}
+          <p><small>About listing: {{ message.listing_title }}</small></p>
+        {% endif %}
+
+        <p>{{ message.message_text }}</p>
+        <p><small>{{ message.sent_at }}</small></p>
+      </div>
+      <hr>
+    {% endfor %}
+  {% else %}
+    <p>No messages yet.</p>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <h3>Reply</h3>
+  <form method="post">
+    <textarea name="message_text" rows="4" placeholder="Write your reply..." required></textarea>
+    <button type="submit">Send Reply</button>
+  </form>
+</div>
+
+<p><a class="listing-link" href="{{ url_for('messages') }}">Back to Messages</a></p>
+
+{% endblock %}

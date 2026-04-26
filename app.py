@@ -194,6 +194,176 @@ def listing_detail(listing_id):
 
     return render_template('listing_detail.html', listing=listing, image=image)
 
+@app.route('/listing/<int:listing_id>/message', methods=['POST'])
+@login_required
+def send_message(listing_id):
+    message_text = request.form.get('message_text', '').strip()
+
+    if not message_text:
+        flash('Message cannot be empty.')
+        return redirect(url_for('listing_detail', listing_id=listing_id))
+
+    conn = get_db_connection()
+    cur = conn.cursor(dictionary=True)
+
+    cur.execute(
+        '''
+        SELECT user_id, title
+        FROM listings
+        WHERE id = %s
+        ''',
+        (listing_id,)
+    )
+    listing = cur.fetchone()
+
+    if not listing:
+        cur.close()
+        conn.close()
+        flash('Listing not found.')
+        return redirect(url_for('home'))
+
+    seller_id = listing['user_id']
+    sender_id = session['user_id']
+
+    if sender_id == seller_id:
+        cur.close()
+        conn.close()
+        flash('You cannot message yourself about your own listing.')
+        return redirect(url_for('listing_detail', listing_id=listing_id))
+
+    cur2 = conn.cursor()
+    cur2.execute(
+        '''
+        INSERT INTO messages (sender_id, receiver_id, listing_id, message_text)
+        VALUES (%s, %s, %s, %s)
+        ''',
+        (sender_id, seller_id, listing_id, message_text)
+    )
+    conn.commit()
+    cur2.close()
+
+    cur.close()
+    conn.close()
+
+    return redirect(url_for('conversation', other_user_id=seller_id))
+
+@app.route('/messages')
+@login_required
+def messages():
+    conn = get_db_connection()
+    cur = conn.cursor(dictionary=True)
+
+    cur.execute(
+        '''
+        SELECT
+            CASE
+                WHEN m.sender_id = %s THEN m.receiver_id
+                ELSE m.sender_id
+            END AS other_user_id,
+            CASE
+                WHEN m.sender_id = %s THEN r.name
+                ELSE s.name
+            END AS other_user_name,
+            MAX(m.sent_at) AS last_sent_at
+        FROM messages m
+        JOIN users s ON m.sender_id = s.id
+        JOIN users r ON m.receiver_id = r.id
+        WHERE m.sender_id = %s OR m.receiver_id = %s
+        GROUP BY other_user_id, other_user_name
+        ORDER BY last_sent_at DESC
+        ''',
+        (session['user_id'], session['user_id'], session['user_id'], session['user_id'])
+    )
+
+    conversations = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template('messages.html', conversations=conversations)
+
+@app.route('/messages/<int:other_user_id>', methods=['GET', 'POST'])
+@login_required
+def conversation(other_user_id):
+    conn = get_db_connection()
+    cur = conn.cursor(dictionary=True)
+
+    cur.execute(
+        '''
+        SELECT id, name
+        FROM users
+        WHERE id = %s
+        ''',
+        (other_user_id,)
+    )
+    other_user = cur.fetchone()
+
+    if not other_user:
+        cur.close()
+        conn.close()
+        flash('User not found.')
+        return redirect(url_for('messages'))
+
+    if request.method == 'POST':
+        message_text = request.form.get('message_text', '').strip()
+
+        if not message_text:
+            cur.close()
+            conn.close()
+            flash('Message cannot be empty.')
+            return redirect(url_for('conversation', other_user_id=other_user_id))
+
+        cur2 = conn.cursor()
+        cur2.execute(
+            '''
+            INSERT INTO messages (sender_id, receiver_id, listing_id, message_text)
+            VALUES (%s, %s, %s, %s)
+            ''',
+            (session['user_id'], other_user_id, None, message_text)
+        )
+        conn.commit()
+        cur2.close()
+
+        cur.close()
+        conn.close()
+
+        return redirect(url_for('conversation', other_user_id=other_user_id))
+
+    cur.execute(
+        '''
+        SELECT
+            m.id,
+            m.sender_id,
+            m.receiver_id,
+            m.listing_id,
+            m.message_text,
+            m.sent_at,
+            s.name AS sender_name,
+            r.name AS receiver_name,
+            l.title AS listing_title
+        FROM messages m
+        JOIN users s ON m.sender_id = s.id
+        JOIN users r ON m.receiver_id = r.id
+        LEFT JOIN listings l ON m.listing_id = l.id
+        WHERE
+            (m.sender_id = %s AND m.receiver_id = %s)
+            OR
+            (m.sender_id = %s AND m.receiver_id = %s)
+        ORDER BY m.sent_at ASC
+        ''',
+        (session['user_id'], other_user_id, other_user_id, session['user_id'])
+    )
+    chat_messages = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template(
+        'conversation.html',
+        other_user=other_user,
+        chat_messages=chat_messages
+    )
+
 @app.route('/create', methods=['GET', 'POST'])
 @login_required
 def create_listing():
