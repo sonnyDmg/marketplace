@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Edit Listing</h1>
+
+<form method="post" class="panel form-card">
+  <label>Title</label>
+  <input type="text" name="title" value="{{ listing.title }}" required>
+
+  <label>Description</label>
+  <textarea name="description" rows="5">{{ listing.description }}</textarea>
+
+  <label>Price</label>
+  <input type="number" step="0.01" name="price" value="{{ listing.price }}" required>
+
+  <label>Location</label>
+  <input type="text" name="location" value="{{ listing.location or '' }}">
+
+  <label>Condition</label>
+  <input type="text" name="item_condition" value="{{ listing.item_condition or '' }}" placeholder="Used - Good">
+
+  <label>Category</label>
+  <select name="category_id" required>
+    {% for category in categories %}
+      <option value="{{ category.id }}" {% if listing.category_id == category.id %}selected{% endif %}>
+        {{ category.name }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <label>Status</label>
+  <select name="status">
+    <option value="available" {% if listing.status == 'available' %}selected{% endif %}>Available</option>
+    <option value="pending" {% if listing.status == 'pending' %}selected{% endif %}>Pending</option>
+    <option value="sold" {% if listing.status == 'sold' %}selected{% endif %}>Sold</option>
+  </select>
+
+  <div class="button-row">
+    <button type="submit">Save Changes</button>
+    <a class="conversation-link" href="{{ url_for('listing_detail', listing_id=listing.id) }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

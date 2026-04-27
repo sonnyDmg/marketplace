@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block content %}
+<article class="panel detail-card">
+  <h1>{{ listing.title }}</h1>
+  <p><strong>${{ '%.2f'|format(listing.price) }}</strong></p>
+  <p>Category: {{ listing.category_name }}</p>
+  <p>Seller: {{ listing.seller_name }}</p>
+  <p>Status: {{ listing.status }}</p>
+
+  {% if listing.location %}
+    <p>Location: {{ listing.location }}</p>
+  {% endif %}
+
+  {% if listing.item_condition %}
+    <p>Condition: {{ listing.item_condition }}</p>
+  {% endif %}
+
+  {% if images %}
+    <div class="detail-images">
+      {% for image in images %}
+        <img src="{{ url_for('uploaded_file', filename=image.image_path) }}" alt="{{ listing.title }}">
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>No image available.</p>
+  {% endif %}
+
+  <hr>
+  <p>{{ listing.description or 'No description provided.' }}</p>
+
+{% if current_user_id and current_user_id != listing.seller_id %}
+  <div class="panel">
+    <h3>Message Seller</h3>
+    <form method="post" action="{{ url_for('send_message', listing_id=listing.id) }}">
+      <textarea name="message_text" rows="4" placeholder="Ask about this item..." required></textarea>
+      <button type="submit">Send Message</button>
+    </form>
+  </div>
+{% elif current_user_id == listing.seller_id %}
+  <div class="panel">
+    <p>This is your listing.</p>
+  </div>
+  {% if current_user_id == listing.seller_id %}
+  <div class="panel">
+    <div class="button-row">
+      <a class="conversation-link" href="{{ url_for('edit_listing', listing_id=listing.id) }}">Edit Listing</a>
+
+      <form method="post" action="{{ url_for('delete_listing', listing_id=listing.id) }}" onsubmit="return confirm('Delete this listing?');">
+        <button type="submit">Delete Listing</button>
+      </form>
+    </div>
+  </div>
+{% endif %}
+{% else %}
+  <div class="panel">
+    <p><a href="{{ url_for('login') }}">Log in</a> to message the seller.</p>
+  </div>
+{% endif %}
+</article>
+{% endblock %}

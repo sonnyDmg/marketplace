@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Messages</h1>
+
+{% if conversations %}
+  {% for convo in conversations %}
+    <article class="panel">
+      <h3>{{ convo.other_user_name }}</h3>
+      <p><small>Last message: {{ convo.last_sent_at }}</small></p>
+      <p>
+        <a class="listing-link nav-btns" href="{{ url_for('conversation', other_user_id=convo.other_user_id) }}">
+          Open Chat
+        </a>
+      </p>
+    </article>
+  {% endfor %}
+{% else %}
+  <div class="panel">No messages yet.</div>
+{% endif %}
+
+{% endblock %}

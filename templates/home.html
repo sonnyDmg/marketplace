@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="marketplace-layout">
+  <aside id="side-bar" class="sidenav">
+    <form method="get" class="panel sidebar">
+      <div class="search-options">
+        <label for="q">Search</label>
+        <input id="q" type="text" name="q" value="{{ q }}" placeholder="Search titles or locations">
+      </div>
+
+      <div class="search-options">
+        <label for="location">Location</label>
+        <input id="location" type="text" name="location" placeholder="Enter Search Location" value="{{ location_query }}">
+      </div>
+
+      <div class="search-options">
+        <label for="category">Category</label>
+        <select id="category" name="category">
+          <option value="">All</option>
+          {% for category in categories %}
+            <option value="{{ category.id }}" {% if selected_category == category.id %}selected{% endif %}>{{ category.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="search-options favorites-toggle">
+        <label class="toggle-label">
+          <input
+            type="checkbox"
+            name="favorites"
+            value="1"
+            {% if favorites_only %}checked{% endif %}
+          >
+          <span class="toggle-slider"></span>
+          <span class="toggle-text">Favorites only</span>
+        </label>
+      </div>
+
+      <div class="button-row search-options">
+        <button type="submit">Filter</button>
+        <button type="button" class="clear-btn" onclick="clearFilters()">Clear</button>
+      </div>
+    </form>
+  </aside>
+
+  <main class="marketplace-main">
+    <h1 class="main-title">Listings</h1>
+
+    <div class="listings">
+      {% for listing in listings %}
+        <article class="panel listing-card">
+          {% if current_user_id %}
+            <button
+              type="button"
+              class="favorite-btn"
+              onclick="toggleFavorite(this, {{ listing.id }})"
+            >
+              <svg class="heart {% if listing.is_favorited %}active{% endif %}" viewBox="0 0 24 24">
+                <path d="M12 21c-.3 0-.6-.1-.8-.3C9 18.8 3 13.6 3 9.5 3 6.5 5.4 4 8.4 4c1.7 0 3.2.9 4 2.3C13.2 4.9 14.7 4 16.4 4 19.4 4 21.8 6.5 21.8 9.5c0 4.1-6 9.3-8.2 11.2-.2.2-.5.3-.8.3z"/>
+              </svg>
+            </button>
+          {% endif %}
+        <div class="listing-image" data-images='{{ listing.images | tojson }}'>
+          {% if listing.images %}
+            <button type="button" class="image-nav prev" onclick="changeImage(this, -1)">‹</button>
+
+            <img
+              src="{{ url_for('uploaded_file', filename=listing.images[0]) }}"
+              alt="{{ listing.title }}"
+              data-index="0"
+            >
+
+            <button type="button" class="image-nav next" onclick="changeImage(this, 1)">›</button>
+          {% else %}
+            <div class="no-image">No Image</div>
+          {% endif %}
+        </div>
+          <h2>
+            <a class="listing-link" href="{{ url_for('listing_detail', listing_id=listing.id) }}">
+              {{ listing.title }}
+            </a>
+          </h2>
+
+          <p class="price"><strong>${{ '%.2f'|format(listing.price) }}</strong></p>
+          <p>{{ listing.category_name }}{% if listing.location %} · {{ listing.location }}{% endif %}</p>
+          <p>Seller: {{ listing.seller_name }}</p>
+          <p>Status: {{ listing.status }}</p>
+        </article>
+      {% else %}
+        <div class="panel">No listings found.</div>
+      {% endfor %}
+    </div>
+  </main>
+</div>
+<script>
+  function clearFilters() {
+    const form = document.querySelector('.sidebar');
+    if (form) {
+      form.reset();
+    }
+    window.location = "{{ url_for('home') }}";
+  }
+</script>
+<script>
+  function changeImage(button, direction) {
+    const container = button.closest('.listing-image');
+    const img = container.querySelector('img');
+    const images = JSON.parse(container.dataset.images);
+
+    let index = Number(img.dataset.index);
+    index = (index + direction + images.length) % images.length;
+
+    img.dataset.index = index;
+    img.src = `/uploads/${images[index]}`;
+  }
+</script>
+<script>
+  function toggleFavorite(button, listingId) {
+    fetch(`/listing/${listingId}/favorite`, {
+      method: "POST",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest"
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      const heart = button.querySelector(".heart");
+
+      if (data.favorited) {
+        heart.classList.add("active");
+      } else {
+        heart.classList.remove("active");
+      }
+    });
+  }
+</script>
+{% endblock %}
